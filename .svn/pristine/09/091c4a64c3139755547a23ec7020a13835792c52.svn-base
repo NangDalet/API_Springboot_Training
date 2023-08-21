@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ut.masterCode.mapper.primary.PermissionMapper">
+
+  <select id="checkPermission" resultType="java.lang.Long">
+    SELECT
+      COUNT(id)
+    FROM
+      permissions_api
+    WHERE
+      group_id IN (SELECT group_id FROM user_groups_api WHERE user_id = #{userId}) AND
+      module_id = (SELECT id FROM modules_api WHERE name = #{moduleName} AND status = 1)
+  </select>
+
+  <insert id="insert">
+    INSERT INTO permissions_api (
+      group_id,
+      module_id
+    ) VALUES (
+      #{roleId},
+      #{moduleId}
+    )
+  </insert>
+
+  <insert id="delete">
+    DELETE FROM permissions_api WHERE group_id = #{roleId}
+  </insert>
+
+</mapper>

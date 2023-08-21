@@ -1,0 +1,6 @@
+user.entityname=User
+form.save.success=had been saved.
+form.update.success=had been updated.
+form.update.fail=fail to updated.
+form.delete.success=had been deleted.
+

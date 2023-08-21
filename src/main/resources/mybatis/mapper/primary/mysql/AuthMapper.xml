@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ut.masterCode.mapper.primary.AuthMapper">
+
+  <insert id="insertClientId">
+    INSERT INTO oauth_client_details (client_id, device_info, client_secret, scope, authorized_grant_types, web_server_redirect_uri, authorities, access_token_validity, refresh_token_validity, additional_information, autoapprove, created)
+    VALUES (#{clientId}, #{clientName}, #{clientSecure}, 'read,write,trust', 'password,refresh_token', null, null, #{tokenValidate}, #{refreshTokenValidate}, null, 1, now())
+    ON DUPLICATE KEY UPDATE device_info = #{clientName}, access_token_validity = #{tokenValidate}, refresh_token_validity = #{refreshTokenValidate}, created = now();
+  </insert>
+
+  <select id="checkUserValid" parameterType="java.lang.String" resultType="java.lang.Long">
+    SELECT COUNT(id) FROM users_api WHERE username = #{username} AND is_active = 1 LIMIT 1;
+  </select>
+
+  <select id="checkStatusUserLogin" parameterType="java.lang.String" resultType="java.lang.Long">
+    SELECT status_login FROM users_api WHERE username = #{username} AND is_active = 1 LIMIT 1;
+  </select>
+
+  <select id="checkUserLogout" parameterType="java.lang.String" resultType="java.lang.String">
+    SELECT refresh_token FROM oauth_access_token WHERE user_name = #{username} AND client_id = #{clientId} LIMIT 1;
+  </select>
+
+  <delete id="clearUserToken">
+    DELETE FROM oauth_access_token WHERE user_name = #{username} AND client_id = #{clientId};
+    DELETE FROM oauth_client_details WHERE client_id = #{clientId};
+    DELETE FROM oauth_refresh_token WHERE token_id = #{tokenId};
+  </delete>
+
+
+ <!-- <insert id="insertClientId">
+    INSERT INTO oauth_client_details (client_id, device_info, client_secret, scope, authorized_grant_types, web_server_redirect_uri, authorities, access_token_validity, refresh_token_validity, additional_information, autoapprove, created)
+    VALUES (#{clientId}, #{clientName}, #{clientSecure}, 'read,write,trust', 'password,refresh_token', null, null, #{tokenValidate}, #{refreshTokenValidate}, null, 1, now())
+      ON DUPLICATE KEY UPDATE device_info = #{clientName}, access_token_validity = #{tokenValidate}, refresh_token_validity = #{refreshTokenValidate}, created = now();
+  </insert>
+
+  <select id="checkUserValid" parameterType="java.lang.String" resultType="java.lang.Long">
+    SELECT COUNT(id) FROM users_api WHERE username = #{username} AND is_active = 1 LIMIT 1;
+  </select>
+
+  <select id="checkStatusUserLogin" parameterType="java.lang.String" resultType="java.lang.Long">
+    SELECT status_login FROM users_api WHERE username = #{username} AND is_active = 1 LIMIT 1;
+  </select>
+
+  <select id="checkUserLogout" parameterType="java.lang.String" resultType="java.lang.String">
+    SELECT refresh_token FROM oauth_access_token WHERE user_name = #{username} AND client_id = #{clientId} LIMIT 1;
+  </select>
+
+  <delete id="clearUserToken">
+    DELETE FROM oauth_access_token WHERE user_name = #{username} AND client_id = #{clientId};
+    DELETE FROM oauth_client_details WHERE client_id = #{clientId};
+    DELETE FROM oauth_refresh_token WHERE token_id = #{tokenId};
+  </delete>-->
+
+
+</mapper>

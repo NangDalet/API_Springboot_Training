@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ut.masterCode.mapper.primary.ModuleTypeMapper">
+
+  <sql id="BASE_COLUMN_LIST">
+    *
+  </sql>
+
+  <sql id="BASE_FROM">
+    FROM module_types_api
+  </sql>
+
+  <sql id="BASE_WHERE">
+    WHERE status = 1
+    <if test="filter.searchText != null">AND name LIKE CONCAT("%", #{filter.searchText}, "%")</if>
+  </sql>
+
+  <select id="getList" parameterType="com.ut.masterCode.model.base.Filter" resultMap="ModuleType">
+    SELECT
+    <include refid="BASE_COLUMN_LIST"/>
+    <include refid="BASE_FROM"/>
+    <include refid="BASE_WHERE"/>
+    ORDER BY
+    <choose>
+      <when test="filter.orderBy != null">
+        ${filter.orderBy}
+      </when>
+      <otherwise>
+        ordering ASC
+      </otherwise>
+    </choose>
+    <if test="filter.page != null and filter.rowsPerPage != null">LIMIT #{filter.page}, #{filter.rowsPerPage}</if>
+  </select>
+
+  <select id="countList" parameterType="com.ut.masterCode.model.base.Filter" resultType="java.lang.Long">
+    SELECT COUNT(id)
+    <include refid="BASE_FROM"/>
+    <include refid="BASE_WHERE"/>
+  </select>
+
+  <select id="getOne" parameterType="java.lang.Long" resultMap="ModuleType">
+    SELECT *
+    FROM module_types_api
+    WHERE status = 1 AND id = #{id}
+  </select>
+
+</mapper>

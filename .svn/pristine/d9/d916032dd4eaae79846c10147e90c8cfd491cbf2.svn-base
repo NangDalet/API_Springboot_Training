@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ut.masterCode.mapper.primary.ModuleMapper">
+
+  <select id="getOne" parameterType="java.lang.Long" resultMap="Module">
+    SELECT *, 0 AS checked
+    FROM modules_api
+    WHERE status = 1 AND module_type_id = #{id} ORDER BY ordering ASC
+  </select>
+
+  <select id="getOneByRoleId" parameterType="java.lang.Long" resultMap="Module">
+    SELECT
+      *,
+      (SELECT COUNT(id) FROM permissions_api WHERE module_id = modules_api.id AND group_id = #{roleId} LIMIT 01) AS checked
+    FROM modules_api
+    WHERE status = 1 AND module_type_id = #{id} ORDER BY ordering ASC
+  </select>
+
+  <select id="getOneByUserId" parameterType="java.lang.Long" resultMap="Module">
+    SELECT
+      *,
+      (SELECT COUNT(id) FROM permissions_api WHERE module_id = modules_api.id AND group_id IN (SELECT group_id FROM user_groups_api WHERE user_id = #{userId}) LIMIT 01) AS checked
+    FROM modules_api
+    WHERE status = 1 AND module_type_id = #{id} ORDER BY ordering ASC
+  </select>
+
+</mapper>

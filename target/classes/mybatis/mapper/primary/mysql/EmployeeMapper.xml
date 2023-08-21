@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ut.masterCode.mapper.primary.EmployeeMapper">
+
+    <select id="list" resultMap="EmployeeResponse">
+        SELECT * FROM employees ORDER BY id ASC
+            LIMIT #{filter.page}, #{filter.rowsPerPage}
+    </select>
+
+    <select id="checkDuplicate" resultType="Long">
+        SELECT COUNT(id)
+        FROM employees
+        WHERE is_active=1 AND employee_code = #{employeeCode}
+    </select>
+
+    <insert id="insert" >
+        INSERT INTO employees(user_id,
+                              department_id,
+                              position_id,
+                              send_payslip_via_id,
+                              employee_status_id,
+                              name,
+                              employee_code,
+                              gender,
+                              date_of_birth,
+                              photo,
+                              wg,
+                              cost_center_id,
+                              date_of_employee,
+                              base_location,
+                              region,
+                              vehicle_remark,
+                              payslip_method_id,
+                              bank_name,
+                              bank_acc_number,
+                              pension_account_number,
+                              email,
+                              phone_number,
+                              telegram_id,
+                              address,
+                              wife,
+                              child,
+                              is_provident_fund,
+                              employee_pension_percentage,
+                              employer_pension_percentage,
+                              current_salary,
+                              created,
+                              created_by,
+                              is_active)
+                    VALUES(#{employee.userId},
+                        #{employee.departmentId},
+                        #{employee.positionId},
+                        #{employee.sendPayslipViaId},
+                        #{employee.employeeStatusId},
+                        #{employee.name},
+                        #{employee.employeeCode},
+                        #{employee.gender},
+                        #{employee.dateOfBirth},
+                        #{employee.photo},
+                        #{employee.wg},
+                        #{employee.costCenterId},
+                        #{employee.dateOfEmployee},
+                        #{employee.baseLocation},
+                        #{employee.region},
+                        #{employee.vehicleRemark},
+                        #{employee.payslipMethodId},
+                        #{employee.bankName},
+                        #{employee.bankAccNumber},
+                        #{employee.pensionAccountNumber},
+                        #{employee.email},
+                        #{employee.phoneNumber},
+                        #{employee.telegramId},
+                        #{employee.address},
+                        #{employee.wife},
+                        #{employee.child},
+                        #{employee.isProvidentFund},
+                        #{employee.employeePensionPercentage},
+                        #{employee.employerPensionPercentage},
+                        #{employee.currentSalary},
+                        NOW(),
+                        #{employee.createdBy},
+                        #{employee.isActive})
+    </insert>
+
+    <select id="checkDuplicateUpdate" resultType="java.lang.Long">
+        SELECT COUNT(id)
+        FROM employees
+        WHERE is_active = 1 AND employee_code = #{updateEmployeeCode}
+        <if test="id != null"> AND id != #{id} </if>
+    </select>
+
+    <update id="update">
+        UPDATE employees SET
+        <if test="employee.userId != null">user_id = #{employee.userId},</if>
+        <if test="employee.departmentId != null">department_id = #{employee.departmentId},</if>
+        <if test="employee.positionId != null">position_id = #{employee.positionId},</if>
+        <if test="employee.sendPayslipViaId != null">send_payslip_via_id = #{employee.sendPayslipViaId},</if>
+        <if test="employee.employeeStatusId != null">employee_status_id = #{employee.employeeStatusId},</if>
+        <if test="employee.name != null">name = #{employee.name},</if>
+        <if test="employee.employeeCode != null">employee_code = #{employee.employeeCode},</if>
+        <if test="employee.gender != null">gender = #{employee.gender},</if>
+        <if test="employee.dateOfBirth != null">date_of_birth = #{employee.dateOfBirth},</if>
+        <if test="employee.photo != null">photo = #{employee.photo},</if>
+        <if test="employee.wg != null">wg = #{employee.wg},</if>
+        <if test="employee.costCenterId != null">cost_center_id = #{employee.costCenterId},</if>
+        <if test="employee.dateOfEmployee != null">date_of_employee = #{employee.dateOfEmployee},</if>
+        <if test="employee.baseLocation != null">base_location = #{employee.baseLocation},</if>
+        <if test="employee.region != null">region = #{employee.region},</if>
+        <if test="employee.vehicleRemark != null">vehicle_remark = #{employee.vehicleRemark},</if>
+        <if test="employee.payslipMethodId != null">payslip_method_id = #{employee.payslipMethodId},</if>
+        <if test="employee.bankName != null">bank_name = #{employee.bankName},</if>
+        <if test="employee.bankAccNumber != null">bank_acc_number = #{employee.bankAccNumber},</if>
+        <if test="employee.pensionAccountNumber != null">pension_account_number = #{employee.pensionAccountNumber},</if>
+        <if test="employee.email != null">email = #{employee.email},</if>
+        <if test="employee.phoneNumber != null">phone_number = #{employee.phoneNumber},</if>
+        <if test="employee.telegramId != null">telegram_id = #{employee.telegramId},</if>
+        <if test="employee.address != null">address = #{employee.address},</if>
+        <if test="employee.wife != null">wife = #{employee.wife},</if>
+        <if test="employee.child != null">child = #{employee.child},</if>
+        <if test="employee.isProvidentFund != null">is_provident_fund = #{employee.isProvidentFund},</if>
+        <if test="employee.employeePensionPercentage != null">employee_pension_percentage = #{employee.employeePensionPercentage},</if>
+        <if test="employee.employerPensionPercentage != null">employer_pension_percentage = #{employee.employerPensionPercentage},</if>
+        <if test="employee.currentSalary != null">current_salary = #{employee.currentSalary},</if>
+        modified = NOW(),
+        modified_by = #{employee.modifiedBy}
+        WHERE id = #{employee.id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM employees WHERE id =#{id};
+    </delete>
+
+    <select id="getOne" resultMap="EmployeeResponse">
+        SELECT * FROM employees WHERE id=#{id} ORDER BY id ASC
+    </select>
+
+    <select id="checkTotal" resultType="Long">
+        SELECT COUNT(id) FROM employees
+    </select>
+</mapper>

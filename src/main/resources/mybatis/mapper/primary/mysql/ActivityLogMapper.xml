@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ut.masterCode.mapper.primary.ActivityLogMapper">
+
+  <sql id="BASE_COLUMN_LIST">
+        *,
+        bug AS bug,
+       DATE_FORMAT(created, "%d-%m-%Y") AS createdDate
+  </sql>
+
+  <sql id="BASE_FROM">
+    FROM system_activities_api
+  </sql>
+
+  <sql id="BASE_WHERE">
+    WHERE status IN(1,2)
+
+    <if test="filter.startDate != null and filter.endDate != '' and filter.startDate != null and filter.endDate != ''">
+      AND DATE(system_activities_api.created) >= #{filter.startDate} AND DATE(system_activities_api.created) &lt;= #{filter.startDate}
+    </if>
+
+    <if test="filter.moduleId != null">
+      AND system_activities_api.module_id = #{filter.moduleId}
+    </if>
+
+    <if test="filter.userId != null">
+      AND system_activities_api.created_by = #{filter.userId}
+    </if>
+
+    <if test="filter.status != null">
+      AND system_activities_api.status = #{filter.status}
+    </if>
+  </sql>
+
+  <select id="getList" parameterType="com.ut.masterCode.model.filter.ActivityFilter" resultMap="ActivityLog">
+    SELECT
+    <include refid="BASE_COLUMN_LIST"/>
+    <include refid="BASE_FROM"/>
+    <include refid="BASE_WHERE"/>
+    ORDER BY
+    <choose>
+      <when test="filter.orderBy != null">
+        ${filter.orderBy}
+      </when>
+      <otherwise>
+        id DESC
+      </otherwise>
+    </choose>
+    <if test="filter.page != null and filter.rowsPerPage != null">LIMIT #{filter.page}, #{filter.rowsPerPage}</if>
+  </select>
+
+  <select id="countList" parameterType="com.ut.masterCode.model.base.Filter" resultType="java.lang.Long">
+    SELECT COUNT(id)
+    <include refid="BASE_FROM"/>
+    <include refid="BASE_WHERE"/>
+  </select>
+
+  <select id="getOne" parameterType="java.lang.Long" resultMap="ActivityLog">
+    SELECT
+    <include refid="BASE_COLUMN_LIST"/>
+    <include refid="BASE_FROM"/>
+    WHERE status IN(1,2) AND id = #{id}
+  </select>
+
+  <insert id="insert" parameterType="com.ut.masterCode.model.ActivityLog" useGeneratedKeys="true" keyProperty="activityLog.id">
+    INSERT INTO system_activities_api (
+      endpoint,
+      module,
+      module_id,
+      act,
+      description,
+      bug,
+      line_code,
+      browser,
+      operating_system,
+      ip,
+      host_name,
+      duration,
+      created_by,
+      created,
+      status
+    ) VALUES (
+      #{activityLog.endpoint},
+      #{activityLog.module},
+      #{activityLog.moduleId},
+      #{activityLog.act},
+      #{activityLog.description},
+      #{activityLog.bug},
+      #{activityLog.line},
+      #{activityLog.brower},
+      #{activityLog.operatingSystem},
+      #{activityLog.ip},
+      #{activityLog.hostName},
+      #{activityLog.duration},
+      #{activityLog.createdBy},
+      NOW(),
+      #{activityLog.status}
+    )
+  </insert>
+
+  <select id="getModuleId" resultType="java.lang.Long">
+    SELECT id FROM `modules_api` WHERE `status` = 1 AND `name` = #{moduleName} LIMIT 1
+  </select>
+
+  <select id="getFullName" resultType="java.lang.String">
+    SELECT `username` FROM `users_api` WHERE `is_active` = 1 AND `id` = #{userId} LIMIT 1
+  </select>
+
+</mapper>

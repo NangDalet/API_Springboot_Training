@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ut.masterCode.mapper.primary.CompanyMapper">
+
+    <insert id="insert" >
+        INSERT INTO companys(name,
+                               name_of_staff,
+                               skill,
+                               salary,
+                               created,
+                               created_by,
+                               is_active)
+                    VALUES(#{company.name},
+                        #{company.nameOfStaff},
+                        #{company.skill},
+                        #{company.salary},
+                        NOW(),
+                        #{company.createdBy},
+                        #{company.isActive})
+    </insert>
+
+    <delete id="delete">
+        DELETE FROM companys WHERE id =#{id};
+    </delete>
+
+    <select id="checkDuplicate" resultType="Long">
+        SELECT COUNT(id)
+        FROM companys
+        WHERE is_active=1 AND name = #{name}
+    </select>
+
+    <select id="checkDuplicateUpdate" resultType="java.lang.Long">
+        SELECT COUNT(id)
+        FROM companys
+        WHERE is_active = 1 AND name = #{updateName}
+        <if test="id != null"> AND id != #{id} </if>
+    </select>
+
+    <update id="update">
+        UPDATE companys SET
+        <if test="company.id != null">id = #{company.id},</if>
+        <if test="company.name != null">name = #{company.name},</if>
+        <if test="company.nameOfStaff != null">name_Of_Staff = #{company.nameOfStaff},</if>
+        <if test="company.skill != null">skill = #{company.skill},</if>
+        <if test="company.salary != null">salary = #{company.salary},</if>
+        modified = NOW(),
+        modified_by = #{company.modifiedBy}
+        WHERE id = #{company.id}
+    </update>
+
+    <select id="list" resultMap="CompanyResponse">
+        SELECT * FROM companys ORDER BY id ASC
+        LIMIT #{filter.page}, #{filter.rowsPerPage}
+    </select>
+
+    <select id="getOne" resultMap="CompanyResponse">
+        SELECT * FROM companys WHERE id=#{id} ORDER BY id ASC
+    </select>
+
+    <select id="checkTotal" resultType="Long">
+        SELECT COUNT(id) FROM companys
+    </select>
+
+</mapper>

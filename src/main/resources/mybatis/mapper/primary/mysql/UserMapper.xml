@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ut.masterCode.mapper.primary.UserMapper">
+
+  <sql id="BASE_COLUMN_LIST">
+    *,
+    users_api.employeeId AS employeeId,
+    DATE_FORMAT(created, "%d-%m-%Y") AS createdDate
+  </sql>
+
+  <sql id="BASE_FROM">
+    FROM users_api
+  </sql>
+
+  <sql id="BASE_WHERE">
+    WHERE is_active = 1
+    <if test="filter.searchText != null">
+      AND (
+        username LIKE CONCAT("%", #{filter.searchText}, "%")
+      )
+    </if>
+    <if test="filter.groupId != null">
+      AND id IN (SELECT user_id FROM user_groups_api WHERE group_id = #{filter.groupId})
+    </if>
+  </sql>
+
+  <select id="getList" parameterType="com.ut.masterCode.model.base.Filter" resultMap="UserResponse">
+    SELECT
+    <include refid="BASE_COLUMN_LIST"/>
+    <include refid="BASE_FROM"/>
+    <include refid="BASE_WHERE"/>
+    ORDER BY
+    <choose>
+      <when test="filter.orderBy != null">
+        ${filter.orderBy}
+      </when>
+      <otherwise>
+        id DESC
+      </otherwise>
+    </choose>
+    <if test="filter.page != null and filter.rowsPerPage != null">LIMIT #{filter.page}, #{filter.rowsPerPage}</if>
+  </select>
+
+  <select id="countList" parameterType="com.ut.masterCode.model.base.Filter" resultType="java.lang.Long">
+    SELECT COUNT(id)
+    <include refid="BASE_FROM"/>
+    <include refid="BASE_WHERE"/>
+  </select>
+
+  <select id="getOne" parameterType="java.lang.Long" resultMap="User">
+    SELECT *
+    FROM users_api WHERE is_active = 1 AND id = #{id} LIMIT 01
+  </select>
+
+  <select id="getOneByUsername" parameterType="java.lang.String" resultMap="User">
+    SELECT *
+    FROM users_api
+    WHERE is_active = 1 AND username = #{username} LIMIT 01
+  </select>
+
+  <select id="getOneByUserId" resultMap="UserResponse">
+    SELECT
+      users_api.id AS id,
+      employees.photo AS photo,
+      employees.photo_type AS photoType,
+      employees.id AS employeeId,
+      employees.employee_code AS employeeCode,
+      employees.name AS employeeName,
+      employees.sex AS employeeGender,
+      employees.dob AS employeeDob,
+      employees.personal_number AS employeePhoneNumber,
+      employees.email AS employeeEmail,
+      employees.province_id AS provinceId,
+      provinces.name AS provinceName,
+      employees.district_id AS districtId,
+      districts.name AS districtName,
+      employees.commune_id AS communeId,
+      communes.name AS communeName,
+      employees.village_id AS villageId,
+      villages.name AS villageName,
+      DATE_FORMAT(employees.created, "%Y-%m-%d") AS createdDate
+
+    FROM users_api
+
+           INNER JOIN user_employees ON user_employees.user_id = users_api.id
+           INNER JOIN employees ON employees.id = user_employees.employee_id
+           LEFT JOIN provinces ON provinces.id = employees.province_id
+           LEFT JOIN districts ON districts.id = employees.district_id
+           LEFT JOIN communes ON communes.id = employees.commune_id
+           LEFT JOIN villages ON villages.id = employees.village_id
+
+    WHERE users_api.id = #{userId};
+  </select>
+
+  <select id="getOneByGroup" parameterType="java.lang.Long" resultMap="User">
+    SELECT *
+    FROM users_api
+    WHERE is_active = 1 AND id IN (SELECT user_id FROM user_groups_api WHERE group_id = #{groupId})
+  </select>
+
+  <select id="getOneUserGroupList" parameterType="java.lang.Long" resultMap="UserGroupList">
+    SELECT * FROM groups_api WHERE id IN (SELECT group_id FROM user_groups_api WHERE user_id = #{id});
+  </select>
+
+  <insert id="insert" parameterType="com.ut.masterCode.model.Users.User" useGeneratedKeys="true" keyProperty="user.id">
+    INSERT INTO users_api (
+      <if test="user.employeeId != null">employeeId,</if>
+      <if test="user.fullName != null">full_name,</if>
+      <if test="user.username != null">username,</if>
+      <if test="user.password != null">password,</if>
+      <if test="user.signature != null">signature,</if>
+      created,
+      created_by,
+      modified,
+      modified_by,
+      is_active
+    ) VALUES (
+      <if test="user.employeeId != null">#{user.employeeId},</if>
+      <if test="user.fullName != null">#{user.fullName},</if>
+      <if test="user.username != null">#{user.username},</if>
+      <if test="user.password != null">#{user.password},</if>
+      <if test="user.signature != null">#{user.signature},</if>
+      NOW(),
+      #{user.createdBy},
+      NOW(),
+      #{user.createdBy},
+      1
+    );
+
+    UPDATE employees SET
+      user_id = LAST_INSERT_ID()
+    WHERE id = #{user.employeeId};
+  </insert>
+
+  <update id="update" parameterType="com.ut.masterCode.model.Users.User">
+    UPDATE users_api SET
+      <if test="user.employeeId != null">employeeId = #{user.employeeId},</if>
+      <if test="user.fullName != null">full_name = #{user.fullName},</if>
+      <if test="user.username != null">username = #{user.username},</if>
+      <if test="user.password != null">password = #{user.password},</if>
+      <if test="user.signature != null">signature = #{user.signature},</if>
+      modified = NOW(),
+      modified_by = #{user.modifiedBy}
+    WHERE id = #{user.id}
+  </update>
+
+  <update id="editProfile" parameterType="com.ut.masterCode.model.Users.User">
+    UPDATE employees SET
+      <if test="user.photo != null">photo = #{user.photo},</if>
+      <if test="user.photoType != null">photo_type = #{user.photoType},</if>
+      <if test="user.employeeName != null">name = #{user.employeeName},</if>
+      <if test="user.employeeGender != null">sex = #{user.employeeGender},</if>
+      <if test="user.employeeDob != null">dob = #{user.employeeDob},</if>
+      <if test="user.employeePhoneNumber != null">personal_number = #{user.employeePhoneNumber},</if>
+      <if test="user.employeeEmail != null">email = #{user.employeeEmail},</if>
+      <if test="user.provinceId != null">province_id = #{user.provinceId},</if>
+      <if test="user.districtId != null">district_id = #{user.districtId},</if>
+      <if test="user.communeId != null">commune_id = #{user.communeId},</if>
+      <if test="user.villageId != null">village_id = #{user.villageId},</if>
+
+      modified = NOW(),
+      modified_by = #{user.modifiedBy}
+    WHERE id = #{user.employeeId};
+  </update>
+
+  <delete id="delete" parameterType="java.lang.Long">
+    UPDATE users_api SET
+      modified = NOW(),
+      modified_by = 1,
+      is_active = 2
+    WHERE id = #{id}
+  </delete>
+
+  <insert id="insertSystemRoleUser">
+    INSERT INTO user_groups_api (user_id, group_id) VALUES (#{userId}, #{groupId});
+  </insert>
+
+  <insert id="deleteSystemRoleUser">
+    DELETE FROM user_groups_api WHERE user_id = #{userId}
+  </insert>
+
+  <select id="getEmployeeId" parameterType="java.lang.Long" resultType="java.lang.Long">
+    SELECT employeeId FROM users_api WHERE is_active = 1 AND id = #{userId} LIMIT 01
+  </select>
+
+  <select id="getUserBilling" parameterType="java.lang.Long" resultMap="UserBilling">
+    SELECT sys_code, first_name, last_name, username, password, is_active FROM users_api WHERE id = #{userId} LIMIT 01
+  </select>
+
+</mapper>

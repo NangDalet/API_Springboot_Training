@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ut.masterCode.mapper.primary.LeaveRequestMapper">
+
+    <sql id="BASE_COLUMN_LIST">
+    leave_requests.id AS id,
+    leave_requests.employee_id AS employeeId,
+    emp1.name AS employeeName,
+    emp1.employee_code AS employeeCode,
+    emp1.photo AS employeePhoto,
+    leave_requests.reason AS reason,
+    DATE_FORMAT(leave_requests.created, '%d-%b-%Y') AS created,
+    user1.full_name AS createdBy
+    </sql>
+
+    <sql id="BASE_FROM">
+        FROM leave_requests
+    LEFT JOIN employees AS emp1 ON emp1.id = leave_requests.employee_id
+    LEFT JOIN users_api AS user1 ON user1.id = leave_requests.created_by
+    LEFT JOIN leave_request_date ON leave_request_date.leave_request_id = leave_requests.id
+    </sql>
+
+    <sql id="BASE_WHERE">
+        WHERE leave_requests.is_active = 1
+        <if test="filter.employeeId != null">
+            AND leave_requests.employee_id = #{filter.employeeId}
+        </if>
+        <if test="filter.employeeCode != null">
+            AND emp1.employee_code = #{filter.employeeCode}
+        </if>
+        <if test="filter.employeeId != null">
+            AND emp1.id = #{filter.employeeId}
+        </if>
+        <if test="filter.requestDate != null and filter.requestDate != ''">
+            AND DATE(leave_request_date.date) = #{filter.requestDate}
+        </if>
+
+    </sql>
+
+    <select id="getList" parameterType="com.ut.masterCode.model.filter.LeaveRequestFilter" resultMap="LeaveRequestResponse">
+        SELECT
+        <include refid="BASE_COLUMN_LIST"/>
+        <include refid="BASE_FROM"/>
+        <include refid="BASE_WHERE"/>
+        GROUP BY leave_requests.id
+        ORDER BY
+        <choose>
+            <when test="filter.orderBy != null">
+                ${filter.orderBy}
+            </when>
+            <otherwise>
+                leave_requests.id DESC
+            </otherwise>
+        </choose>
+        <if test="filter.page != null and filter.rowsPerPage != null">LIMIT #{filter.page}, #{filter.rowsPerPage}</if>
+    </select>
+
+    <select id="getLeaveRequestDate" parameterType="java.lang.Long" resultMap="LeaveRequestDateResponse">
+        SELECT
+            `date`
+        FROM leave_request_date WHERE `is_active` = 1 AND `leave_request_id` = #{leaveRequestId};
+    </select>
+
+    <select id="countList" parameterType="com.ut.masterCode.model.filter.LeaveRequestFilter" resultType="java.lang.Long">
+        SELECT COUNT(leave_requests.id)
+        <include refid="BASE_FROM"/>
+        <include refid="BASE_WHERE"/>
+        GROUP BY leave_requests.id
+    </select>
+
+    <select id="getLeaveRequestDateList" parameterType="java.lang.Long" resultMap="LeaveRequestDateResponse">
+        SELECT
+            DATE_FORMAT(`date`, '%d-%b-%Y') AS date
+        FROM leave_request_date WHERE `is_active` = 1 AND `leave_request_id` = #{leaveRequestId};
+    </select>
+
+    <insert id="insert" parameterType="com.ut.masterCode.model.LeaveRequest" useGeneratedKeys="true" keyProperty="leaveRequest.id">
+        INSERT INTO leave_requests (
+            employee_id,
+            reason,
+            created,
+            created_by,
+            is_active
+        ) VALUES (
+                     #{leaveRequest.employeeId},
+                     #{leaveRequest.reason},
+                     NOW(),
+                     #{leaveRequest.createdBy},
+                     #{leaveRequest.isActive}
+                 );
+
+        INSERT INTO leave_request_histories (
+            employee_id,
+            reason,
+            created,
+            created_by,
+            is_active
+        ) VALUES (
+                     #{leaveRequest.employeeId},
+                     #{leaveRequest.reason},
+                     NOW(),
+                     #{leaveRequest.createdBy},
+                     #{leaveRequest.isActive}
+                 );
+    </insert>
+
+    <insert id="insertLeaveRequestDetail" parameterType="com.ut.masterCode.model.request.LeaveRequest.LeaveRequestDetailRequest">
+        INSERT INTO `leave_request_date`(
+            `leave_request_id`,
+            `date`,
+            created_by,
+            created,
+            is_active)
+        VALUES (#{leaveRequestDetail.leaveRequestId},
+                #{leaveRequestDetail.date},
+                #{leaveRequestDetail.createdBy},
+                NOW(),
+                1);
+        INSERT INTO `leave_request_date_history`(
+            `leave_request_history_id`,
+            `date`,
+            created_by,
+            created,
+            is_active)
+        VALUES (#{leaveRequestDetail.leaveRequestId},
+                #{leaveRequestDetail.date},
+                #{leaveRequestDetail.createdBy},
+                NOW(),
+                1);
+    </insert>
+
+    <update id="deleteLeaveRequestDetail" parameterType="java.lang.Long">
+        UPDATE leave_request_date SET
+                                      modified = NOW(),
+                                      modified_by = #{userId},
+                                      is_active = 2
+        WHERE leave_request_id = #{leaveRequestId};
+
+        UPDATE leave_request_date_history SET
+                                              modified = NOW(),
+                                              modified_by = #{userId},
+                                              is_active = 2
+        WHERE leave_request_history_id = #{leaveRequestId};
+
+    </update>
+
+    <update id="update" parameterType="com.ut.masterCode.model.LeaveRequest">
+        UPDATE leave_requests SET
+        <if test="leaveRequest.employeeId != null">`employee_id` = #{leaveRequest.employeeId},</if>
+        <if test="leaveRequest.reason != null">`reason` = #{leaveRequest.reason},</if>
+        modified = NOW(),
+        modified_by = #{leaveRequest.modifiedBy}
+        WHERE id = #{leaveRequest.id}
+    </update>
+
+    <update id="delete" parameterType="java.lang.Long">
+        UPDATE leave_requests SET
+                                  is_active = 2,
+                                  modified = NOW(),
+                                  modified_by = #{userId}
+        WHERE id = #{id};
+    </update>
+
+    <select id="getOne" resultMap="LeaveRequestResponse">
+        SELECT
+        <include refid="BASE_COLUMN_LIST"/>
+        <include refid="BASE_FROM"/>
+        WHERE leave_requests.id = #{id} AND leave_requests.is_active = 1 LIMIT 1
+    </select>
+</mapper>

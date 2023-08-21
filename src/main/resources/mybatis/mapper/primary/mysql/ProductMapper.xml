@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ut.masterCode.mapper.primary.ProductMapper">
+
+    <insert id="insert" parameterType="com.ut.masterCode.model.Product" useGeneratedKeys="true" keyProperty="product.id">
+        INSERT INTO products(
+                               name,
+                               photo,
+                               description,
+                               price,
+                               created,
+                               created_by,
+                               is_active)
+                    VALUES(
+                        #{product.name},
+                        #{product.photo},
+                        #{product.description},
+                        #{product.price},
+                        NOW(),
+                        #{product.createdBy},
+                        #{product.isActive});
+    </insert>
+
+    <insert id="insertProductSizeDetail" parameterType="com.ut.masterCode.model.request.Login.Product.ProductSizeRequestDetail">
+        INSERT INTO products_size(
+            product_id,
+            size,
+            created,
+            created_by,
+            is_active)
+        VALUES (
+                #{productSizeRequestDetail.productId},
+                #{productSizeRequestDetail.size},
+                NOW(),
+                #{productSizeRequestDetail.createdBy},
+                1);
+    </insert>
+
+    <update id="deleteProductSizeDetail" parameterType="java.lang.Long">
+        UPDATE products_size SET
+                                      modified = NOW(),
+                                      modified_by = #{userId},
+                                      is_active = 2
+        WHERE product_id = #{productId};
+
+    </update>
+
+    <select id="checkDuplicate" resultType="Long">
+        SELECT COUNT(id)
+        FROM products
+        WHERE is_active=1 AND name = #{name}
+    </select>
+
+    <select id="checkDuplicateUpdate" resultType="java.lang.Long">
+        SELECT COUNT(id)
+        FROM products
+        WHERE is_active = 1 AND name = #{updateName}
+        <if test="id != null"> AND id != #{id} </if>
+    </select>
+
+    <update id="update" parameterType="com.ut.masterCode.model.Product">
+        UPDATE products SET
+        <if test="product.id != null">id = #{product.id},</if>
+        <if test="product.name != null">name = #{product.name},</if>
+        <if test="product.photo != null">photo = #{product.photo},</if>
+        <if test="product.description != null">description = #{product.description},</if>
+        <if test="product.price != null">price = #{product.price},</if>
+        modified = NOW(),
+        modified_by = #{product.modifiedBy}
+        WHERE id = #{product.id}
+    </update>
+
+    <delete id="delete" parameterType="java.lang.Long">
+        UPDATE products SET
+                            modified = NOW(),
+                            modified_by = 1,
+                            is_active = 2
+        WHERE id = #{id}
+    </delete>
+
+    <select id="checkTotal" resultType="Long">
+        SELECT COUNT(id) FROM products
+    </select>
+
+</mapper>

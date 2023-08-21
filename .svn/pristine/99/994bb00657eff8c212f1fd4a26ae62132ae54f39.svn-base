@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ut.masterCode.mapper.primary.NotificationMapper">
+
+    <sql id="BASE_COLUMN_LIST">
+    notifications.`id` AS id,
+    notifications.`notification_type` AS notificationType,
+    (CASE WHEN notification_type = 1 THEN 'has been sent to'
+          WHEN notification_type = 2 THEN 'has been returned to'
+          WHEN notification_type = 3 THEN 'has been added Vital Sign'
+          WHEN notification_type = 4 THEN 'has been returned to'
+    END) AS message,
+    notifications.`patient_id` AS patientId,
+    patients.patient_name AS patientName,
+    notifications.`doctor_id` AS doctorId,
+    employees.name AS doctorName,
+    employees.photo AS photo,
+    employees.photo_type AS photoType,
+    notifications.`created` AS createdDate
+    </sql>
+
+    <sql id="BASE_FROM">
+        FROM `notifications`
+                LEFT JOIN patients ON patients.id = notifications.patient_id
+
+                LEFT JOIN users ON users.id = notifications.doctor_id
+                LEFT JOIN user_employees ON user_employees.user_id = users.id
+                LEFT JOIN employees ON employees.id = user_employees.employee_id
+    </sql>
+
+    <sql id="BASE_WHERE">
+        WHERE notifications.is_active = 1
+    </sql>
+
+    <select id="getList" parameterType="com.ut.masterCode.model.filter.PatientFilter" resultMap="NotificationResponse">
+        SELECT
+        <include refid="BASE_COLUMN_LIST"/>
+        <include refid="BASE_FROM"/>
+        <include refid="BASE_WHERE"/>
+        GROUP BY notifications.id
+        ORDER BY
+        <choose>
+            <when test="filter.orderBy != null">
+                ${filter.orderBy}
+            </when>
+            <otherwise>
+                notifications.id DESC
+            </otherwise>
+        </choose>
+        <if test="filter.page != null and filter.rowsPerPage != null">LIMIT #{filter.page}, #{filter.rowsPerPage}</if>
+    </select>
+
+    <select id="countList" parameterType="com.ut.masterCode.model.base.Filter" resultType="java.lang.Long">
+        SELECT COUNT(notifications.id)
+        <include refid="BASE_FROM"/>
+        <include refid="BASE_WHERE"/>
+    </select>
+
+  <insert id="insertNotification" parameterType="com.ut.masterCode.model.NotificationOnMobile" useGeneratedKeys="true" keyProperty="notification.id">
+    INSERT INTO `notifications` (`notification_type`,
+                            `message`,
+                            `patient_id`,
+                            `doctor_id`,
+                            `created`,
+                            `created_by`,
+                            `is_active`)
+                             VALUES
+                              (#{notification.notificationType},
+                               #{notification.message},
+                               #{notification.patientId},
+                               #{notification.doctorId},
+                              NOW(),
+                               #{notification.createdBy},
+                               1);
+  </insert>
+
+    <insert id="readAll" parameterType="java.lang.Long">
+        INSERT INTO `notification_user_reads` (`notification_id`, created, created_by, is_active)
+        SELECT `id`,NOW(), #{userId},1 FROM `notifications` WHERE `is_active` = 1 AND `id`
+            NOT IN (SELECT `notification_id` FROM `notification_user_reads` WHERE `is_active` = 1 AND `created_by` = #{userId})
+
+    </insert>
+
+    <insert id="insertUserDeviceToken" parameterType="com.ut.masterCode.model.UserDeviceNotification" useGeneratedKeys="true" keyProperty="userDeviceNotification.id">
+        INSERT INTO user_device_tokens (
+            user_id,
+            username,
+            language_id,
+            app_type,
+            device_id,
+            device_name,
+            device_token,
+            created,
+            is_active
+        ) VALUES (
+                     #{userDeviceNotification.userId},
+                     #{userDeviceNotification.username},
+                     2,
+                     #{userDeviceNotification.appType},
+                     #{userDeviceNotification.deviceId},
+                     #{userDeviceNotification.deviceName},
+                     #{userDeviceNotification.deviceToken},
+                     NOW(),
+                     #{userDeviceNotification.isActive}
+                 )
+    </insert>
+
+    <select id="checkDuplicate" resultType="java.lang.Long">
+        SELECT COUNT(id)
+        FROM user_device_tokens
+        WHERE is_active = 1 AND user_id = #{userId} AND device_id = #{deviceId} AND device_token = #{deviceToken}
+    </select>
+
+    <select id="getDeviceToken" parameterType="java.lang.Long" resultType="java.lang.String">
+        SELECT `device_token`
+        FROM `user_device_tokens`
+        WHERE `is_active` = 1
+        GROUP BY `device_token`,`user_id`,`device_id`
+    </select>
+
+</mapper>
