@@ -11,7 +11,7 @@ public class LeaveRequestDetailRequest {
     @ApiModelProperty(position = 2)
     private String date;
 
-    @ApiModelProperty(position = 1, hidden = true)
+    @ApiModelProperty(position = 3, hidden = true)
     private Long createdBy;
 
     @ApiModelProperty(position = 2, hidden = true)

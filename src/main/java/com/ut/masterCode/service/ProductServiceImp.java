@@ -13,6 +13,7 @@ import com.ut.masterCode.model.base.Filter;
 import com.ut.masterCode.model.base.Pagination;
 import com.ut.masterCode.model.base.ResponseMessage;
 import com.ut.masterCode.model.filter.LeaveRequestFilter;
+import com.ut.masterCode.model.filter.ProductFilter;
 import com.ut.masterCode.model.request.LeaveRequest.LeaveRequestDetailRequest;
 import com.ut.masterCode.model.request.Login.Product.ProductRequest;
 import com.ut.masterCode.model.request.Login.Product.ProductSizeRequestDetail;
@@ -56,15 +57,80 @@ public class ProductServiceImp implements ProductService {
             return null;
         }
     }
-
     @Override
-    public ResponseMessage<BaseResult> getList(LeaveRequestFilter filter, HttpServletRequest httpServletRequest) throws UnknownHostException {
-        return null;
+    public ResponseMessage<BaseResult> getList(ProductFilter filter, HttpServletRequest httpServletRequest) throws UnknownHostException {
+        LocalTime startDuration = LocalTime.now();
+        Long line = 1033L;
+        try {
+            // Check Permission
+            Long userId = userService.getUserAuth().getId();
+            //if (permissionMapper.checkPermission(userId, "Leave Request (View)") == 0) {
+            //return ResponseMessageUtils.makeResponseByPermission(true, messageService.message("No Permission access.", false));
+            //}
+
+            Pagination pagination = new Pagination();
+            pagination.setPage(filter.getPage());
+            pagination.setRowsPerPage(filter.getRowsPerPage());
+            pagination.setTotal((long) productMapper.countList(filter).size());
+            filter.setPage((filter.getPage() - 1) * filter.getRowsPerPage());
+
+            List<ProductResponse> productResponses = productMapper.getList(filter);
+
+            if (productResponses.size() > 0) {
+                for (int i = 0; i < productResponses.size(); i++) {
+                    //! Get Product Id
+                    Long productId = productResponses.get(i).getId();
+                    //! Get product size
+                    List<ProductSizeResponse> productSizeResponses = productMapper.getProductSizeList(productId);
+                    productResponses.get(i).setProductSize(productSizeResponses);
+                }
+            }
+
+            /*System Activity*/
+            LocalTime endDuration = LocalTime.now();
+            activityLogService.insert("/product/list", null, null, "Product", "Product (View)", "View", 1, "Success", startDuration, endDuration, httpServletRequest);
+            return ResponseMessageUtils.makeResponse(true, messageService.message("Success", productResponses, pagination, true));
+        } catch (Exception error) {
+            System.out.println(error);
+            /*System Activity*/
+            LocalTime endDuration = LocalTime.now();
+            activityLogService.insert("/Product/list", line, error.toString(), "Product", "Product (View)", "View", 2, "Error", startDuration, endDuration, httpServletRequest);
+            return ResponseMessageUtils.makeResponse(true, messageService.message("Error", null, false));
+        }
     }
 
     @Override
     public ResponseMessage<BaseResult> getOne(Long id, HttpServletRequest httpServletRequest) throws UnknownHostException {
-        return null;
+        LocalTime startDuration = LocalTime.now();
+        Long line = 1033L;
+        try {
+            // Check Permission
+            Long userId = userService.getUserAuth().getId();
+            //if (permissionMapper.checkPermission(userId, "Leave Request (View)") == 0) {
+            //return ResponseMessageUtils.makeResponseByPermission(true, messageService.message("No Permission access.", false));
+            //}
+
+            List<ProductResponse> productResponses = productMapper.getOne(id);
+
+            if (productResponses.size() > 0) {
+                for (int i = 0; i < productResponses.size(); i++) {
+                    //! Get Product Id
+                    Long productId = productResponses.get(i).getId();
+                    //! Get Product Size
+                    List<ProductSizeResponse> productSizeResponses = productMapper.getProductSizeResponse(productId);
+                    productResponses.get(i).setProductSize(productSizeResponses);
+                }
+            }
+            /*System Activity*/
+            LocalTime endDuration = LocalTime.now();
+            activityLogService.insert("/Product/find/{id}", null, null, "Product", "Product (View)", "View", 1, "Success", startDuration, endDuration, httpServletRequest);
+            return ResponseMessageUtils.makeResponse(true, messageService.message("Success", productResponses, true));
+        } catch (Exception error) {
+            /*System Activity*/
+            LocalTime endDuration = LocalTime.now();
+            activityLogService.insert("/Product/find/{id}", line, error.toString(), "Product", "Product (View)", "View", 2, "Error", startDuration, endDuration, httpServletRequest);
+            return ResponseMessageUtils.makeResponse(true, messageService.message("Error", null, false));
+        }
     }
 
 

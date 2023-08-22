@@ -5,4 +5,8 @@
     <resultMap id="ProductResponse" type="com.ut.masterCode.model.response.Product.ProductResponse">
     </resultMap>
 
+    <resultMap id="ProductSizeResponse" type="com.ut.masterCode.model.response.Product.ProductSizeResponse">
+
+    </resultMap>
+
 </mapper>

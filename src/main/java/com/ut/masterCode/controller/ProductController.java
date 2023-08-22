@@ -5,6 +5,8 @@ import com.ut.masterCode.helper.ResponseMessageUtils;
 import com.ut.masterCode.model.base.BaseResult;
 import com.ut.masterCode.model.base.Filter;
 import com.ut.masterCode.model.base.ResponseMessage;
+import com.ut.masterCode.model.filter.LeaveRequestFilter;
+import com.ut.masterCode.model.filter.ProductFilter;
 import com.ut.masterCode.model.request.Login.CompanyRequest;
 import com.ut.masterCode.model.request.Login.Product.ProductRequest;
 import com.ut.masterCode.model.request.Login.Product.ProductUpdateRequest;
@@ -28,6 +30,25 @@ public class ProductController {
     @Autowired
     private ProductService productService;
 
+    @PostMapping("/list")
+    @ApiOperation(value = "List product by filter", notes = "Request size is array of string.", authorizations = {@Authorization(value = "Bearer")})
+    public ResponseMessage<BaseResult> list(@RequestBody ProductFilter filter, HttpServletRequest httpServletRequest) throws UnknownHostException {
+        // Check Header Token
+        if (UserAuthSession.getUserAuth() == null) {
+            return ResponseMessageUtils.makeResponse(false, 401, "unauthorized", "No Permission to access");
+        }
+        return productService.getList(filter, httpServletRequest);
+    }
+    @PostMapping("/find/{id}")
+    @ApiOperation(value = "Product Request (Find) By Id", notes = "Product size is array of string.", authorizations = {@Authorization(value = "Bearer")})
+    private ResponseMessage<BaseResult> getOne(@PathVariable("id") Long id, HttpServletRequest httpServletRequest) throws UnknownHostException {
+        // Check Header Token
+        if (UserAuthSession.getUserAuth() == null) {
+            return ResponseMessageUtils.makeResponse(false, 401, "unauthorized", "No Permission to access");
+        }
+        return productService.getOne(id, httpServletRequest);
+    }
+
     @PostMapping(value = "insert", consumes = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Product (insert)", notes = "statusCode: 400: Bad Request (Invalid Parameter); 401:Authorization", authorizations = {@Authorization(value = "Bearer")})
     public ResponseMessage<BaseResult> InsertProductFormData(@RequestBody ProductRequest productRequest, HttpServletRequest httpServletRequest) throws UnknownHostException {
@@ -48,28 +69,6 @@ public class ProductController {
             return ResponseMessageUtils.makeResponse(false, 401, "unauthorized", "No Permission to access");
         }
         return productService.update(productUpdateRequest, httpServletRequest);
-    }
-
-//    @PostMapping("getOne/{id}")
-//    @ApiOperation(value = "Product (List one)", notes = "statusCode: 400: Bad Request (Invalid Parameter); 401:Authorization", authorizations = {@Authorization(value = "Bearer")})
-//    public ResponseMessage<BaseResult> getOne(@PathVariable("id") Long id) {
-//        // Check Header Token
-//        if (UserAuthSession.getUserAuth() == null) {
-//            return ResponseMessageUtils.makeResponse(false, 401, "unauthorized", "No Permission to access");
-//        }
-//        return productService.getOne(id);
-//        return null;
-//    }
-
-    @PostMapping("list")
-    @ApiOperation(value = "Product (List)", notes = "statusCode: 400: Bad Request (Invalid Parameter); 401:Authorization", authorizations = {@Authorization(value = "Bearer")})
-    public ResponseMessage<BaseResult> list(@RequestBody Filter filter) {
-        // Check Header Token
-        if (UserAuthSession.getUserAuth() == null) {
-            return ResponseMessageUtils.makeResponse(false, 401, "unauthorized", "No Permission to access");
-        }
-        //return productService.list(filter);
-        return null;
     }
 
     @PostMapping("/delete/{id}")

@@ -5,7 +5,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode(callSuper = true)
-public class ProductRequestFilter extends Filter {
+public class ProductFilter extends Filter {
     @ApiModelProperty(position = 12)
     private String name;
 
