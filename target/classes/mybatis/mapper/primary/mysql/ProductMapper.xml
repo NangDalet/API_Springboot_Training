@@ -2,6 +2,77 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.ut.masterCode.mapper.primary.ProductMapper">
 
+    <sql id="BASE_COLUMN_LIST">
+    products.id AS id,
+    products.name AS name,
+    products.photo AS photo,
+    products.description AS description,
+    products.price AS price,
+    DATE_FORMAT(products.created, '%d-%b-%Y') AS created,
+    user1.full_name AS createdBy
+    </sql>
+
+    <sql id="BASE_FROM">
+    FROM products
+    LEFT JOIN users_api AS user1 ON user1.id = products.created_by
+    LEFT JOIN products_size ON products_size.product_id = products.id
+    </sql>
+
+    <sql id="BASE_WHERE">
+        WHERE products.is_active = 1
+        <if test="filter.productSize != null and filter.productSize != ''">
+            AND products_size.size = #{filter.productSize}
+        </if>
+    </sql>
+
+    <select id="getList" parameterType="com.ut.masterCode.model.filter.ProductFilter" resultMap="ProductResponse">
+        SELECT
+        <include refid="BASE_COLUMN_LIST"/>
+        <include refid="BASE_FROM"/>
+        <include refid="BASE_WHERE"/>
+        GROUP BY products.id
+        ORDER BY
+        <choose>
+            <when test="filter.orderBy != null">
+                ${filter.orderBy}
+            </when>
+            <otherwise>
+                products.id DESC
+            </otherwise>
+        </choose>
+        <if test="filter.page != null and filter.rowsPerPage != null">LIMIT #{filter.page}, #{filter.rowsPerPage}</if>
+    </select>
+
+    <select id="getProductSizeList" parameterType="java.lang.Long" resultMap="ProductSizeResponse">
+        SELECT
+            `size` AS size
+        FROM products_size WHERE `is_active` = 1 AND `product_id` = #{productId};
+    </select>
+
+    <select id="countList" parameterType="com.ut.masterCode.model.filter.ProductFilter" resultType="java.lang.Long">
+        SELECT COUNT(products.id)
+        <include refid="BASE_FROM"/>
+        <include refid="BASE_WHERE"/>
+        GROUP BY products.id
+    </select>
+
+    <select id="getProductSizeResponse" parameterType="java.lang.Long" resultMap="ProductSizeResponse">
+        SELECT
+            `size` AS size
+        FROM products_size WHERE `is_active` = 1 AND `product_id` = #{productId}
+    </select>
+
+    <select id="getOne" resultMap="ProductResponse">
+        SELECT
+        <include refid="BASE_COLUMN_LIST"/>
+        <include refid="BASE_FROM"/>
+        WHERE products.id = #{id} AND products.is_active = 1 LIMIT 1
+    </select>
+
+    <select id="checkTotal" resultType="Long">
+        SELECT COUNT(id) FROM products
+    </select>
+
     <insert id="insert" parameterType="com.ut.masterCode.model.Product" useGeneratedKeys="true" keyProperty="product.id">
         INSERT INTO products(
                                name,
@@ -77,9 +148,5 @@
                             is_active = 2
         WHERE id = #{id}
     </delete>
-
-    <select id="checkTotal" resultType="Long">
-        SELECT COUNT(id) FROM products
-    </select>
 
 </mapper>
