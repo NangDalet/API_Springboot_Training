@@ -13,6 +13,7 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
+        <option value="Interface" />
         <option value="Class" />
       </list>
     </option>
@@ -32,7 +33,7 @@
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="dart.analysis.tool.window.visible" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../0797_WorkP_FApi/0797_WorkP_FApi" />
     <property name="node.js.detected.package.eslint" value="true" />
     <property name="node.js.detected.package.tslint" value="true" />
     <property name="node.js.selected.package.eslint" value="(autodetect)" />
@@ -43,6 +44,12 @@
     <property name="project.structure.side.proportion" value="0.0" />
     <property name="settings.editor.selected.configurable" value="preferences.lookFeel" />
     <property name="show.migrate.to.gradle.popup" value="false" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\RealWork\UDAYA Technology\0844_Api_Master\src\main\resources\mybatis\mapper\primary\mysql" />
+      <recent name="D:\RealWork\UDAYA Technology\0844_Api_Master\src\main\resources\mybatis\mapper\primary\common" />
+    </key>
   </component>
   <component name="RunManager">
     <configuration name="API-Master" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
@@ -76,7 +83,13 @@
       <workItem from="1692407250653" duration="4552000" />
       <workItem from="1692580283222" duration="12059000" />
       <workItem from="1692599667508" duration="12399000" />
-      <workItem from="1692666398264" duration="10938000" />
+      <workItem from="1692666398264" duration="12327000" />
+      <workItem from="1692685940448" duration="4106000" />
+      <workItem from="1692752826985" duration="727000" />
+      <workItem from="1692772588281" duration="2354000" />
+      <workItem from="1692839154446" duration="1342000" />
+      <workItem from="1692842667394" duration="7693000" />
+      <workItem from="1692859089988" duration="6507000" />
     </task>
     <task id="LOCAL-00001">
       <created>1686717932467</created>

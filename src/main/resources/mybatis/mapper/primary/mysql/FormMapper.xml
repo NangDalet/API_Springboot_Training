@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ut.masterCode.mapper.primary.FormMapper">
+
+    <select id="checkDuplicate" resultType="java.lang.Long">
+        SELECT COUNT(id)
+        FROM forms
+        WHERE is_active = 1 AND name = #{name}
+        <if test="id != null"> AND id != #{id} </if>
+    </select>
+
+    <insert id="insert" parameterType="com.ut.masterCode.model.Form" useGeneratedKeys="true" keyProperty="form.id">
+        INSERT INTO forms(
+            name,
+            form_type,
+            created,
+            created_by,
+            is_active)
+        VALUES(
+                  #{form.name},
+                  #{form.formType},
+                  NOW(),
+                  #{form.createdBy},
+                  #{form.isActive});
+    </insert>
+
+    <insert id="insertSubForm" parameterType="com.ut.masterCode.model.request.Form.SubFormRequest" useGeneratedKeys="true" keyProperty="subFormRequest.id">
+        INSERT INTO sub_forms (
+            form_id,
+            name,
+            form_type_id,
+            remarks,
+            status,
+            ordering
+        ) VALUES (
+                     #{subFormRequest.formId},
+                     #{subFormRequest.name},
+                     #{subFormRequest.formTypeId},
+                     #{subFormRequest.remarks},
+                     #{subFormRequest.status},
+                     #{subFormRequest.ordering}
+                 );
+    </insert>
+
+    <insert id="insertSubSubForm" parameterType="com.ut.masterCode.model.request.Form.SubFormRequest" useGeneratedKeys="true" keyProperty="subSubFormRequest.id">
+        INSERT INTO sub_sub_forms (
+            sub_form_id,
+            name
+        ) VALUES (
+                     #{subSubFormRequest.subFormId},
+                     #{subSubFormRequest.name}
+                 );
+    </insert>
+
+    <update id="update" parameterType="com.ut.masterCode.model.Form">
+        UPDATE forms SET
+        <if test="form.name != null"> `name` = #{form.name},</if>
+        <if test="form.formType != null"> `form_type` = #{form.formType},</if>
+        modified = NOW(),
+        modified_by = #{form.modifiedBy}
+        WHERE id = #{form.id}
+    </update>
+
+</mapper>
