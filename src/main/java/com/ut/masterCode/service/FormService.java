@@ -9,6 +9,8 @@ import javax.servlet.http.HttpServletRequest;
 import java.net.UnknownHostException;
 
 public interface FormService {
+    ResponseMessage<BaseResult> getOne(Long id, HttpServletRequest httpServletRequest) throws UnknownHostException;
     ResponseMessage<BaseResult> insert(FormRequest formRequest, HttpServletRequest httpServletRequest) throws UnknownHostException;
     ResponseMessage<BaseResult> update(FormUpdateRequest formUpdateRequest, HttpServletRequest httpServletRequest) throws UnknownHostException;
+    ResponseMessage<BaseResult> delete(Long id, HttpServletRequest httpServletRequest) throws UnknownHostException;
 }
