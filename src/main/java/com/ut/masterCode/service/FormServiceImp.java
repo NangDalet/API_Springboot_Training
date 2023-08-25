@@ -16,6 +16,9 @@ import com.ut.masterCode.model.request.Form.FormUpdateRequest;
 import com.ut.masterCode.model.request.Form.SubFormRequest;
 import com.ut.masterCode.model.request.Form.SubSubFormRequest;
 import com.ut.masterCode.model.request.Login.Product.ProductSizeRequestDetail;
+import com.ut.masterCode.model.response.Form.FormResponse;
+import com.ut.masterCode.model.response.Form.SubFormResponse;
+import com.ut.masterCode.model.response.Form.SubSubFormResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -49,6 +52,49 @@ public class FormServiceImp implements FormService{
             return null;
         }
     }
+
+    @Override
+    public ResponseMessage<BaseResult> getOne(Long id, HttpServletRequest httpServletRequest) throws UnknownHostException {
+        LocalTime startDuration = LocalTime.now();
+        Long line = 1033L;
+        try {
+            // Check Permission
+            Long userId = userService.getUserAuth().getId();
+//            if (permissionMapper.checkPermission(userId, "Form (View)") == 0 && permissionMapper.checkPermission(userId, "Question (View)") == 0) {
+//                return ResponseMessageUtils.makeResponseByPermission(true, messageService.message("No Permission access.", false));
+//            }
+
+            //! Set zone user
+            List<FormResponse> formRespones = formMapper.getOne(id);
+            if(formRespones.size() > 0) {
+                //! /*Set sub form data*/
+                for (FormResponse formRespone : formRespones) {
+                    Long formId = formRespone.getId();
+                    List<SubFormResponse> subFormRespones = formMapper.getListSubForm(formId);
+                    formRespone.setSubFormResponses(subFormRespones);
+
+                    if(subFormRespones.size() > 0) {
+                        for (int j = 0; j < subFormRespones.size(); j++) {
+                            Long subFormId = subFormRespones.get(j).getId();
+                            List<SubSubFormResponse> subSubFormRespones = formMapper.getListSubSubForm(subFormId);
+                            formRespone.getSubFormResponses().get(j).setSubSubFormResponses(subSubFormRespones);
+                        }
+                    }
+                }
+            }
+
+            /*System Activity*/
+            LocalTime endDuration = LocalTime.now();
+            activityLogService.insert("/form/find/{id}",null,null,"Form","Form (View)","View",1,"Success",startDuration,endDuration, httpServletRequest);
+            return ResponseMessageUtils.makeResponse(true, messageService.message("Success", formRespones, true));
+        } catch (Exception error) {
+            /*System Activity*/
+            LocalTime endDuration = LocalTime.now();
+            activityLogService.insert("/form/find/{id}",line, error.toString(),"Form","Form (View)","View",2,"Error",startDuration,endDuration, httpServletRequest);
+            return ResponseMessageUtils.makeResponse(true, messageService.message("Error", null, false));
+        }
+    }
+
     @Override
     public ResponseMessage<BaseResult> insert(FormRequest formRequest, HttpServletRequest httpServletRequest) throws UnknownHostException {
         LocalTime startDuration = LocalTime.now();
@@ -112,6 +158,121 @@ public class FormServiceImp implements FormService{
 
     @Override
     public ResponseMessage<BaseResult> update(FormUpdateRequest formUpdateRequest, HttpServletRequest httpServletRequest) throws UnknownHostException {
-        return null;
+            LocalTime startDuration = LocalTime.now();
+            Long line = 1033L;
+            try {
+                // Check Permission
+                Long userId = userService.getUserAuth().getId();
+//                if (permissionMapper.checkPermission(userId, "Form (Edit)") == 0 && permissionMapper.checkPermission(userId, "Question (Edit)") == 0) {
+//                    return ResponseMessageUtils.makeResponseByPermission(true, messageService.message("No Permission access.", false));
+//                }
+
+                // Check Duplicate
+                if(formMapper.checkDuplicate(formUpdateRequest.getName(), formUpdateRequest.getId()) > 0){
+                    return ResponseMessageUtils.makeResponse(true, messageService.message("Duplicate form name", false));
+                }
+
+//      if (formMapper.countIsUsedForm(formUpdateRequest.getId()) > 0) {
+//        return ResponseMessageUtils.makeResponseByPermission(true, messageService.message("This form has been used.", false));
+//      }
+
+                // Check Data
+                Form form = new Form();
+                form.setId(formUpdateRequest.getId());
+                form.setName(formUpdateRequest.getName());
+                form.setFormType(formUpdateRequest.getFormType());
+                form.setIsActive(1);
+                form.setModifiedBy(userId);
+
+                Boolean result = formMapper.update(form);
+                if (result) {
+
+                    if(formUpdateRequest.getSubFormRequests().size() > 0) {
+                        for (int i = 0; i < formUpdateRequest.getSubFormRequests().size(); i++) {
+                            //! *Check Data Before insert sub form*/
+                            SubFormRequest subFormRequest = new SubFormRequest();
+                            subFormRequest.setId(formUpdateRequest.getSubFormRequests().get(i).getId());
+                            subFormRequest.setFormId(form.getId());
+                            subFormRequest.setName(formUpdateRequest.getSubFormRequests().get(i).getName());
+                            subFormRequest.setFormTypeId(formUpdateRequest.getSubFormRequests().get(i).getFormTypeId());
+                            subFormRequest.setRemarks(formUpdateRequest.getSubFormRequests().get(i).getRemarks());
+                            subFormRequest.setStatus(formUpdateRequest.getSubFormRequests().get(i).getStatus());
+                            subFormRequest.setIsDeleted(formUpdateRequest.getSubFormRequests().get(i).getIsDeleted());
+                            subFormRequest.setOrdering(formUpdateRequest.getSubFormRequests().get(i).getOrdering());
+
+                            //! delete subform by id
+                            if (subFormRequest.getId()!=null){
+                                formMapper.deleteSubFormId(subFormRequest.getId());
+                            }
+                            // insert sub new
+                            formMapper.insertSubForm(subFormRequest);
+
+                            if(formUpdateRequest.getSubFormRequests().get(i).getSubSubFormRequests().size() > 0) {
+                                for (int j = 0; j < formUpdateRequest.getSubFormRequests().get(i).getSubSubFormRequests().size(); j++) {
+                                    //! /*Check Data Before insert sub sub form*/
+                                    SubSubFormRequest subSubFormRequest = new SubSubFormRequest();
+                                    subSubFormRequest.setId(formUpdateRequest.getSubFormRequests().get(i).getSubSubFormRequests().get(j).getId());
+                                    subSubFormRequest.setSubFormId(subFormRequest.getId());
+                                    subSubFormRequest.setName(formUpdateRequest.getSubFormRequests().get(i).getSubSubFormRequests().get(j).getName());
+                                    subSubFormRequest.setIsDeleted(formUpdateRequest.getSubFormRequests().get(i).getSubSubFormRequests().get(j).getIsDeleted());
+
+                                    //deleteSubSubFormId
+                                    if (subSubFormRequest.getId()!=null){
+                                        formMapper.deleteSubSubFormId(subSubFormRequest.getId());
+                                    }
+                                    //! Add New Sub Sub Form
+                                    formMapper.insertSubSubForm(subSubFormRequest);
+                                }
+                            }
+                        }
+                    }
+
+                    /*System Activity*/
+                    LocalTime endDuration = LocalTime.now();
+                    activityLogService.insert("/form/update",null,null,"Form","Form (Edit)","Edit",1,"Success",startDuration,endDuration, httpServletRequest);
+                    return ResponseMessageUtils.makeResponse(true, messageService.message("Success", true));
+                } else {
+                    return ResponseMessageUtils.makeResponse(true, messageService.message("Fail", false));
+                }
+            } catch (Exception error) {
+                /*System Activity*/
+                LocalTime endDuration = LocalTime.now();
+                activityLogService.insert("/form/update",line, error.toString(),"Form","Form (Edit)","Edit",2,"Error",startDuration,endDuration, httpServletRequest);
+                return ResponseMessageUtils.makeResponse(true, messageService.message("Error", null, false));
+            }
+        }
+
+    @Override
+    public ResponseMessage<BaseResult> delete(Long id, HttpServletRequest httpServletRequest) throws UnknownHostException {
+        {
+            LocalTime startDuration = LocalTime.now();
+            Long line = 1033L;
+            try {
+                // Check Permission
+                Long userId = userService.getUserAuth().getId();
+//                if (permissionMapper.checkPermission(userId, "Form (Delete)") == 0) {
+//                    return ResponseMessageUtils.makeResponseByPermission(true, messageService.message("No Permission access.", false));
+//                }
+
+//      if (formMapper.countIsUsedForm(id) > 0) {
+//        return ResponseMessageUtils.makeResponseByPermission(true, messageService.message("This form has been used.", false));
+//      }
+
+                Boolean result = formMapper.delete(id);
+                if (result) {
+                    /*System Activity*/
+                    LocalTime endDuration = LocalTime.now();
+                    activityLogService.insert("/form/delete/{id}",null,null,"Form","Form (Delete)","Delete",1,"Success",startDuration,endDuration, httpServletRequest);
+                    return ResponseMessageUtils.makeResponse(true, messageService.message("Success", true));
+                } else {
+                    return ResponseMessageUtils.makeResponse(true, messageService.message("Fail", false));
+                }
+            } catch (Exception error) {
+                /*System Activity*/
+                LocalTime endDuration = LocalTime.now();
+                activityLogService.insert("/form/delete/{id}",line, error.toString(),"Form","Form (Delete)","Delete",2,"Error",startDuration,endDuration, httpServletRequest);
+                return ResponseMessageUtils.makeResponse(true, messageService.message("Error", null, false));
+            }
+        }
     }
 }

@@ -2,6 +2,50 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.ut.masterCode.mapper.primary.FormMapper">
 
+    <sql id="BASE_COLUMN_LIST">
+
+    forms.id AS id,
+    forms.name AS name,
+    forms.form_type AS formTypeId,
+    (CASE WHEN forms.form_type = 1 THEN 'ទម្រង់ធម្មតា'
+          WHEN forms.form_type = 2 THEN 'ទម្រង់ពិសេស'
+    END) AS formTypeName,
+(SELECT CONCAT(us.`full_name`, ' ', us.`username`) FROM `users_api` AS us WHERE us.`is_active` = 1 AND us.`id` = forms.created_by LIMIT 1) as createdByUser,
+    DATE_FORMAT(forms.created, '%d-%b-%Y') AS created
+
+    </sql>
+
+    <sql id="BASE_FROM">
+        FROM forms
+    </sql>
+
+    <select id="getOne" parameterType="java.lang.Long" resultMap="FormRespone">
+        SELECT
+        <include refid="BASE_COLUMN_LIST"/>
+        <include refid="BASE_FROM"/>
+        WHERE forms.is_active = 1 AND forms.id = #{id}
+    </select>
+
+    <select id="getListSubForm" parameterType="com.ut.masterCode.model.base.Filter" resultMap="SubFormRespone">
+        SELECT
+            id AS id,
+            name AS name,
+            form_type_id AS formTypeId,
+            (SELECT `name` FROM `form_types` WHERE `id` = sub_forms.form_type_id LIMIT 1) AS formTypeName,
+            status AS status,
+            ordering AS ordering
+        FROM `sub_forms`
+        WHERE form_id = #{formId} ORDER BY sub_forms.ordering ASC
+    </select>
+
+    <select id="getListSubSubForm" parameterType="com.ut.masterCode.model.base.Filter" resultMap="SubFormRespone">
+        SELECT
+            id AS id,
+            name AS name
+        FROM `sub_sub_forms`
+        WHERE sub_form_id = #{subFormId}
+    </select>
+
     <select id="checkDuplicate" resultType="java.lang.Long">
         SELECT COUNT(id)
         FROM forms
@@ -60,5 +104,21 @@
         modified_by = #{form.modifiedBy}
         WHERE id = #{form.id}
     </update>
+
+    <update id="delete" parameterType="java.lang.Long">
+        UPDATE forms SET
+                         is_active = 2,
+                         modified = NOW(),
+                         modified_by = 1
+        WHERE id = #{id};
+    </update>
+
+    <delete id="deleteSubFormId" parameterType="java.lang.Long">
+        DELETE FROM `sub_forms` WHERE `id` = #{id}
+    </delete>
+
+    <delete id="deleteSubSubFormId" parameterType="java.lang.Long">
+        DELETE FROM `sub_sub_forms` WHERE `id` = #{id}
+    </delete>
 
 </mapper>
