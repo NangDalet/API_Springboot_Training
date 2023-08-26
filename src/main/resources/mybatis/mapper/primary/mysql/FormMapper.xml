@@ -19,6 +19,34 @@
         FROM forms
     </sql>
 
+    <sql id="BASE_WHERE">
+        WHERE forms.is_active = 1
+        <if test="filter.searchText != null">AND forms.name LIKE CONCAT("%", #{filter.searchText}, "%")</if>
+    </sql>
+
+    <select id="getList" parameterType="com.ut.masterCode.model.base.Filter" resultMap="FormRespone">
+        SELECT
+        <include refid="BASE_COLUMN_LIST"/>
+        <include refid="BASE_FROM"/>
+        <include refid="BASE_WHERE"/>
+        ORDER BY
+        <choose>
+            <when test="filter.orderBy != null">
+                ${filter.orderBy}
+            </when>
+            <otherwise>
+                forms.id DESC
+            </otherwise>
+        </choose>
+        <if test="filter.page != null and filter.rowsPerPage != null">LIMIT #{filter.page}, #{filter.rowsPerPage}</if>
+    </select>
+
+    <select id="countList" parameterType="com.ut.masterCode.model.base.Filter" resultType="java.lang.Long">
+        SELECT COUNT(forms.id)
+        <include refid="BASE_FROM"/>
+        <include refid="BASE_WHERE"/>
+    </select>
+
     <select id="getOne" parameterType="java.lang.Long" resultMap="FormRespone">
         SELECT
         <include refid="BASE_COLUMN_LIST"/>
