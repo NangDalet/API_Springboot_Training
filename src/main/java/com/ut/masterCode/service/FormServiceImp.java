@@ -10,6 +10,8 @@ import com.ut.masterCode.model.MessageService;
 import com.ut.masterCode.model.Product;
 import com.ut.masterCode.model.Users.User;
 import com.ut.masterCode.model.base.BaseResult;
+import com.ut.masterCode.model.base.Filter;
+import com.ut.masterCode.model.base.Pagination;
 import com.ut.masterCode.model.base.ResponseMessage;
 import com.ut.masterCode.model.request.Form.FormRequest;
 import com.ut.masterCode.model.request.Form.FormUpdateRequest;
@@ -50,6 +52,38 @@ public class FormServiceImp implements FormService{
             }
         } catch (Exception errorr) {
             return null;
+        }
+    }
+
+    @Override
+    public ResponseMessage<BaseResult> getList(Filter filter, HttpServletRequest httpServletRequest) throws UnknownHostException {
+        LocalTime startDuration = LocalTime.now();
+        Long line = 1033L;
+        try {
+            // Check Permission
+            Long userId = userService.getUserAuth().getId();
+//            if (permissionMapper.checkPermission(userId, "Form (View)") == 0) {
+//                return ResponseMessageUtils.makeResponseByPermission(true, messageService.message("No Permission access.", false));
+//            }
+
+            Pagination pagination = new Pagination();
+            pagination.setPage(filter.getPage());
+            pagination.setRowsPerPage(filter.getRowsPerPage());
+            pagination.setTotal(formMapper.countList(filter));
+
+            filter.setPage((filter.getPage() - 1) * filter.getRowsPerPage());
+
+            List<FormResponse> formRespones = formMapper.getList(filter);
+
+            /*System Activity*/
+            LocalTime endDuration = LocalTime.now();
+            activityLogService.insert("/form/list",null,null,"Form","Form (View)","View",1,"Success",startDuration,endDuration, httpServletRequest);
+            return ResponseMessageUtils.makeResponse(true, messageService.message("Success", formRespones, pagination, true));
+        } catch (Exception error) {
+            /*System Activity*/
+            LocalTime endDuration = LocalTime.now();
+            activityLogService.insert("/form/list",line, error.toString(),"Form","Form (View)","View",2,"Error",startDuration,endDuration, httpServletRequest);
+            return ResponseMessageUtils.makeResponse(true, messageService.message("Error", null, false));
         }
     }
 

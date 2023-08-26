@@ -3,6 +3,7 @@ package com.ut.masterCode.controller;
 import com.ut.masterCode.base.UserAuthSession;
 import com.ut.masterCode.helper.ResponseMessageUtils;
 import com.ut.masterCode.model.base.BaseResult;
+import com.ut.masterCode.model.base.Filter;
 import com.ut.masterCode.model.base.ResponseMessage;
 import com.ut.masterCode.model.request.Form.FormRequest;
 import com.ut.masterCode.model.request.Form.FormUpdateRequest;
@@ -26,6 +27,11 @@ import java.net.UnknownHostException;
 public class FormController {
     @Autowired
     private FormService formService;
+    @PostMapping("/list")
+    @ApiOperation(value = "List form by filter", notes = "List form by filter", authorizations = {@Authorization(value = "Bearer")})
+    public ResponseMessage<BaseResult> list(@RequestBody Filter filter, HttpServletRequest httpServletRequest) throws UnknownHostException {
+        return formService.getList(filter, httpServletRequest);
+    }
     @PostMapping("/find/{id}")
     @ApiOperation(value = "Find form by id", authorizations = {@Authorization(value = "Bearer")})
     public ResponseMessage<BaseResult> findById(@PathVariable("id") Long id, HttpServletRequest httpServletRequest) throws UnknownHostException {
